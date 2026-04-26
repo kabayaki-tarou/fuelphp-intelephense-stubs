@@ -1,6 +1,7 @@
 # FuelPHP IDE Stubs Generator
 
-FuelPHPの動的クラスエイリアスをIntelephense（VS Code）に認識させるためのスタブファイルを生成するスクリプトです。
+FuelPHPの動的クラスエイリアスをエディタ側に認識させるためのスタブファイルを生成するスクリプトです。
+IntelephenseとPHPStormで使えることは確認しました
 
 ## 動作要件
 
@@ -64,7 +65,7 @@ $projects = [
 php tools/generate_ide_stubs.php
 ```
 
-### 3. VS Code の設定
+### 3. VS Code の設定（Intelephenseの場合）
 
 `.vscode/settings.json` にスタブディレクトリを追加します。
 
@@ -88,14 +89,6 @@ php tools/generate_ide_stubs.php
 ```
 
 設定後、コマンドパレットから `Intelephense: Index workspace` を実行してください。
-
-### 4. .gitignore
-
-生成ファイルはコミット不要です。
-
-```
-fuel_aliases.php
-```
 
 ## 再生成
 

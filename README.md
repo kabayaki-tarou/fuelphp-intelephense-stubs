@@ -1,7 +1,8 @@
 # FuelPHP IDE Stubs Generator
 
-FuelPHPの動的クラスエイリアスをエディタ側に認識させるためのスタブファイルを生成するスクリプトです。
-IntelephenseとPHPStormで使えることは確認しました
+FuelPHPの動的クラスエイリアスを、エディタ側に認識させるためのスタブファイルを生成するスクリプトです。
+
+IntelephenseとPHPStormで使えることは確認しました。
 
 ## 動作要件
 

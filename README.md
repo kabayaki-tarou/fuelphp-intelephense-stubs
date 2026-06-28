@@ -26,47 +26,21 @@ your-fuelphp-project/
 
 ## セットアップ
 
-### 1. スクリプトの設定
+### 1. スタブの生成
 
-`$projects` 配列をプロジェクトに合わせて編集します。
-
-```php
-$projects = [
-  'my-project' => [
-    'app_classes_dir' => __DIR__ . '/../fuel/app/classes/',
-    'output_file'     => __DIR__ . '/../stubs/fuel_aliases.php',
-  ],
-];
-```
-
-| キー | 説明 |
-|---|---|
-| `app_classes_dir` | `fuel/app/classes/` へのパス |
-| `output_file` | 生成するスタブファイルのパス |
-| `core_classes` | （省略可）FuelPHPバージョンが異なる場合に個別指定 |
-
-複数プロジェクトを同一ワークスペースで管理している場合は、エントリを追加します。
-
-```php
-$projects = [
-  'project-a' => [
-    'app_classes_dir' => '/path/to/project-a/fuel/app/classes/',
-    'output_file'     => '/path/to/project-a/stubs/fuel_aliases.php',
-  ],
-  'project-b' => [
-    'app_classes_dir' => '/path/to/project-b/fuel/app/classes/',
-    'output_file'     => '/path/to/project-b/stubs/fuel_aliases.php',
-  ],
-];
-```
-
-### 2. スタブの生成
+FuelPHP core、appクラス、スタブ出力先ディレクトリのパスを指定して実行します。
 
 ```bash
-php tools/generate_ide_stubs.php
+php tools/generate_ide_stubs.php /path/to/fuel/core /path/to/fuel/app/classes /path/to/stubs
 ```
 
-### 3. VS Code の設定（Intelephenseの場合）
+| 引数 | 説明 |
+|---|---|
+| 第1引数 | `fuel/core/` へのパス。`bootstrap.php` からcoreクラス一覧と宣言種別を判定 |
+| 第2引数 | `fuel/app/classes/` へのパス |
+| 第3引数 | スタブ出力先ディレクトリのパス。`fuel_aliases.php` が生成されます |
+
+### 2. VS Code の設定（Intelephenseの場合）
 
 `.vscode/settings.json` にスタブディレクトリを追加します。
 
@@ -96,7 +70,7 @@ php tools/generate_ide_stubs.php
 `fuel/app/classes/` にファイルを追加・削除した際は再実行してください。
 
 ```bash
-php tools/generate_ide_stubs.php
+php tools/generate_ide_stubs.php /path/to/fuel/core /path/to/fuel/app/classes /path/to/stubs
 ```
 
 ## 注意

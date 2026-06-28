@@ -3,248 +3,66 @@
  * FuelPHP IDEスタブ生成スクリプト
  *
  * FuelPHPのAutoloaderが動的に生成するグローバル名前空間のクラスエイリアスを
- * Intellephenseに認識させるため、各プロジェクトの stubs/fuel_aliases.php を生成します。
+ * Intellephenseに認識させるため、stubs/fuel_aliases.php を生成します。
  *
- * - appレベルのオーバーライドファイルが存在するクラスはスキップされます
- *   （Intellephenseがそのファイルを直接認識しているため、スタブ不要）
- * - Fuel\Core 名前空間でグローバルにエイリアスされるクラスのみ出力します
+ * - FuelPHP core の bootstrap.php から Fuel\Core クラス一覧を取得します
+ * - core実ファイルを読んで class / abstract class / interface を判定します
+ * - appレベルのオーバーライドファイルが存在するクラスはスキップします
  *
  * 使い方:
- *   php tools/generate_ide_stubs.php
+ *   php tools/generate_ide_stubs.php /path/to/fuel/core /path/to/fuel/app/classes /path/to/stubs
  */
 
-// -----------------------------------------------------------------------
-// プロジェクト設定
-//
-// 複数のFuelPHPプロジェクトがある場合はここに追加してください。
-// core_classes を省略するとデフォルトの $default_core_classes が使われます。
-// -----------------------------------------------------------------------
-/** @var array<string, array{app_classes_dir: string, output_file: string, core_classes?: array<string, string>}> */
-$projects = [
-  'fuel' => [
-    'app_classes_dir' => __DIR__ . '/../fuel/app/classes/',
-    'output_file'     => __DIR__ . '/../stubs/fuel_aliases.php',
-    // 'core_classes' => [...],  // プロジェクト固有のクラス一覧がある場合のみ指定
-  ],
-];
+main($argv);
 
 /**
- * setup_autoloader() で登録されている Fuel\Core クラスの一覧（デフォルト）
- *
- * 別バージョンのFuelPHPを使うプロジェクトがある場合は、
- * $projects の該当エントリに core_classes を個別指定してください。
- *
- * @var array<string, string> キー=グローバルエイリアス名, 値=完全修飾クラス名
+ * @param  array<int, string> $argv
+ * @return void
  */
-$default_core_classes = [
-  'Agent'                          => 'Fuel\\Core\\Agent',
-  'Arr'                            => 'Fuel\\Core\\Arr',
-  'Asset'                          => 'Fuel\\Core\\Asset',
-  'Asset_Instance'                 => 'Fuel\\Core\\Asset_Instance',
-  'Cache'                          => 'Fuel\\Core\\Cache',
-  'CacheNotFoundException'         => 'Fuel\\Core\\CacheNotFoundException',
-  'CacheExpiredException'          => 'Fuel\\Core\\CacheExpiredException',
-  'Cache_Handler_Driver'           => 'Fuel\\Core\\Cache_Handler_Driver',
-  'Cache_Handler_Json'             => 'Fuel\\Core\\Cache_Handler_Json',
-  'Cache_Handler_Serialized'       => 'Fuel\\Core\\Cache_Handler_Serialized',
-  'Cache_Handler_String'           => 'Fuel\\Core\\Cache_Handler_String',
-  'Cache_Storage_Driver'           => 'Fuel\\Core\\Cache_Storage_Driver',
-  'Cache_Storage_Apc'              => 'Fuel\\Core\\Cache_Storage_Apc',
-  'Cache_Storage_File'             => 'Fuel\\Core\\Cache_Storage_File',
-  'Cache_Storage_Memcached'        => 'Fuel\\Core\\Cache_Storage_Memcached',
-  'Cache_Storage_Redis'            => 'Fuel\\Core\\Cache_Storage_Redis',
-  'Cache_Storage_Xcache'           => 'Fuel\\Core\\Cache_Storage_Xcache',
-  'Config'                         => 'Fuel\\Core\\Config',
-  'ConfigException'                => 'Fuel\\Core\\ConfigException',
-  'Config_Db'                      => 'Fuel\\Core\\Config_Db',
-  'Config_File'                    => 'Fuel\\Core\\Config_File',
-  'Config_Ini'                     => 'Fuel\\Core\\Config_Ini',
-  'Config_Json'                    => 'Fuel\\Core\\Config_Json',
-  'Config_Interface'               => 'Fuel\\Core\\Config_Interface',
-  'Config_Php'                     => 'Fuel\\Core\\Config_Php',
-  'Config_Yml'                     => 'Fuel\\Core\\Config_Yml',
-  'Config_Memcached'               => 'Fuel\\Core\\Config_Memcached',
-  'Controller'                     => 'Fuel\\Core\\Controller',
-  'Controller_Rest'                => 'Fuel\\Core\\Controller_Rest',
-  'Controller_Template'            => 'Fuel\\Core\\Controller_Template',
-  'Controller_Hybrid'              => 'Fuel\\Core\\Controller_Hybrid',
-  'Cookie'                         => 'Fuel\\Core\\Cookie',
-  'DB'                             => 'Fuel\\Core\\DB',
-  'DBUtil'                         => 'Fuel\\Core\\DBUtil',
-  'Database_Connection'            => 'Fuel\\Core\\Database_Connection',
-  'Database_Result'                => 'Fuel\\Core\\Database_Result',
-  'Database_Exception'             => 'Fuel\\Core\\Database_Exception',
-  'Database_Expression'            => 'Fuel\\Core\\Database_Expression',
-  'Database_Schema'                => 'Fuel\\Core\\Database_Schema',
-  'Database_Query'                 => 'Fuel\\Core\\Database_Query',
-  'Database_Query_Builder'         => 'Fuel\\Core\\Database_Query_Builder',
-  'Database_Query_Builder_Insert'  => 'Fuel\\Core\\Database_Query_Builder_Insert',
-  'Database_Query_Builder_Delete'  => 'Fuel\\Core\\Database_Query_Builder_Delete',
-  'Database_Query_Builder_Update'  => 'Fuel\\Core\\Database_Query_Builder_Update',
-  'Database_Query_Builder_Select'  => 'Fuel\\Core\\Database_Query_Builder_Select',
-  'Database_Query_Builder_Where'   => 'Fuel\\Core\\Database_Query_Builder_Where',
-  'Database_Query_Builder_Join'    => 'Fuel\\Core\\Database_Query_Builder_Join',
-  'Database_SQLite_Builder_Delete' => 'Fuel\\Core\\Database_SQLite_Builder_Delete',
-  'Database_SQLite_Builder_Update' => 'Fuel\\Core\\Database_SQLite_Builder_Update',
-  'Database_Pdo_Connection'        => 'Fuel\\Core\\Database_Pdo_Connection',
-  'Database_Pdo_Result'            => 'Fuel\\Core\\Database_Pdo_Result',
-  'Database_Pdo_Cached'            => 'Fuel\\Core\\Database_Pdo_Cached',
-  'Database_MySQL_Connection'      => 'Fuel\\Core\\Database_MySQL_Connection',
-  'Database_SQLite_Connection'     => 'Fuel\\Core\\Database_SQLite_Connection',
-  'Database_Sqlsrv_Connection'     => 'Fuel\\Core\\Database_Sqlsrv_Connection',
-  'Database_Dblib_Connection'      => 'Fuel\\Core\\Database_Dblib_Connection',
-  'Database_MySQLi_Connection'     => 'Fuel\\Core\\Database_MySQLi_Connection',
-  'Database_MySQLi_Result'         => 'Fuel\\Core\\Database_MySQLi_Result',
-  'Database_MySQLi_Cached'         => 'Fuel\\Core\\Database_MySQLi_Cached',
-  'Fuel'                           => 'Fuel\\Core\\Fuel',
-  'FuelException'                  => 'Fuel\\Core\\FuelException',
-  'Finder'                         => 'Fuel\\Core\\Finder',
-  'Date'                           => 'Fuel\\Core\\Date',
-  'Debug'                          => 'Fuel\\Core\\Debug',
-  'Cli'                            => 'Fuel\\Core\\Cli',
-  'Crypt'                          => 'Fuel\\Core\\Crypt',
-  'Event'                          => 'Fuel\\Core\\Event',
-  'Event_Instance'                 => 'Fuel\\Core\\Event_Instance',
-  'Errorhandler'                   => 'Fuel\\Core\\Errorhandler',
-  'PhpErrorException'              => 'Fuel\\Core\\PhpErrorException',
-  'Format'                         => 'Fuel\\Core\\Format',
-  'Fieldset'                       => 'Fuel\\Core\\Fieldset',
-  'Fieldset_Field'                 => 'Fuel\\Core\\Fieldset_Field',
-  'File'                           => 'Fuel\\Core\\File',
-  'FileAccessException'            => 'Fuel\\Core\\FileAccessException',
-  'OutsideAreaException'           => 'Fuel\\Core\\OutsideAreaException',
-  'InvalidPathException'           => 'Fuel\\Core\\InvalidPathException',
-  'File_Area'                      => 'Fuel\\Core\\File_Area',
-  'File_Handler_File'              => 'Fuel\\Core\\File_Handler_File',
-  'File_Handler_Directory'         => 'Fuel\\Core\\File_Handler_Directory',
-  'Form'                           => 'Fuel\\Core\\Form',
-  'Form_Instance'                  => 'Fuel\\Core\\Form_Instance',
-  'Ftp'                            => 'Fuel\\Core\\Ftp',
-  'FtpConnectionException'         => 'Fuel\\Core\\FtpConnectionException',
-  'FtpFileAccessException'         => 'Fuel\\Core\\FtpFileAccessException',
-  'HttpException'                  => 'Fuel\\Core\\HttpException',
-  'HttpBadRequestException'        => 'Fuel\\Core\\HttpBadRequestException',
-  'HttpNoAccessException'          => 'Fuel\\Core\\HttpNoAccessException',
-  'HttpNotFoundException'          => 'Fuel\\Core\\HttpNotFoundException',
-  'HttpServerErrorException'       => 'Fuel\\Core\\HttpServerErrorException',
-  'Html'                           => 'Fuel\\Core\\Html',
-  'Image'                          => 'Fuel\\Core\\Image',
-  'Image_Driver'                   => 'Fuel\\Core\\Image_Driver',
-  'Image_Gd'                       => 'Fuel\\Core\\Image_Gd',
-  'Image_Imagemagick'              => 'Fuel\\Core\\Image_Imagemagick',
-  'Image_Imagick'                  => 'Fuel\\Core\\Image_Imagick',
-  'Inflector'                      => 'Fuel\\Core\\Inflector',
-  'Input'                          => 'Fuel\\Core\\Input',
-  'Input_Instance'                 => 'Fuel\\Core\\Input_Instance',
-  'Lang'                           => 'Fuel\\Core\\Lang',
-  'LangException'                  => 'Fuel\\Core\\LangException',
-  'Lang_Db'                        => 'Fuel\\Core\\Lang_Db',
-  'Lang_File'                      => 'Fuel\\Core\\Lang_File',
-  'Lang_Ini'                       => 'Fuel\\Core\\Lang_Ini',
-  'Lang_Json'                      => 'Fuel\\Core\\Lang_Json',
-  'Lang_Interface'                 => 'Fuel\\Core\\Lang_Interface',
-  'Lang_Php'                       => 'Fuel\\Core\\Lang_Php',
-  'Lang_Yml'                       => 'Fuel\\Core\\Lang_Yml',
-  'Log'                            => 'Fuel\\Core\\Log',
-  'Markdown'                       => 'Fuel\\Core\\Markdown',
-  'Migrate'                        => 'Fuel\\Core\\Migrate',
-  'Model'                          => 'Fuel\\Core\\Model',
-  'Model_Crud'                     => 'Fuel\\Core\\Model_Crud',
-  'Module'                         => 'Fuel\\Core\\Module',
-  'ModuleNotFoundException'        => 'Fuel\\Core\\ModuleNotFoundException',
-  'Mongo_Db'                       => 'Fuel\\Core\\Mongo_Db',
-  'Mongo_DbException'              => 'Fuel\\Core\\Mongo_DbException',
-  'Output'                         => 'Fuel\\Core\\Output',
-  'Package'                        => 'Fuel\\Core\\Package',
-  'PackageNotFoundException'       => 'Fuel\\Core\\PackageNotFoundException',
-  'Pagination'                     => 'Fuel\\Core\\Pagination',
-  'Presenter'                      => 'Fuel\\Core\\Presenter',
-  'Profiler'                       => 'Fuel\\Core\\Profiler',
-  'Request'                        => 'Fuel\\Core\\Request',
-  'Request_Driver'                 => 'Fuel\\Core\\Request_Driver',
-  'RequestException'               => 'Fuel\\Core\\RequestException',
-  'RequestStatusException'         => 'Fuel\\Core\\RequestStatusException',
-  'Request_Curl'                   => 'Fuel\\Core\\Request_Curl',
-  'Request_Soap'                   => 'Fuel\\Core\\Request_Soap',
-  'Redis_Db'                       => 'Fuel\\Core\\Redis_Db',
-  'RedisException'                 => 'Fuel\\Core\\RedisException',
-  'Response'                       => 'Fuel\\Core\\Response',
-  'Route'                          => 'Fuel\\Core\\Route',
-  'Router'                         => 'Fuel\\Core\\Router',
-  'Sanitization'                   => 'Fuel\\Core\\Sanitization',
-  'Security'                       => 'Fuel\\Core\\Security',
-  'SecurityException'              => 'Fuel\\Core\\SecurityException',
-  'Session'                        => 'Fuel\\Core\\Session',
-  'Session_Driver'                 => 'Fuel\\Core\\Session_Driver',
-  'Session_Db'                     => 'Fuel\\Core\\Session_Db',
-  'Session_Cookie'                 => 'Fuel\\Core\\Session_Cookie',
-  'Session_File'                   => 'Fuel\\Core\\Session_File',
-  'Session_Memcached'              => 'Fuel\\Core\\Session_Memcached',
-  'Session_Redis'                  => 'Fuel\\Core\\Session_Redis',
-  'Session_Exception'              => 'Fuel\\Core\\Session_Exception',
-  'Num'                            => 'Fuel\\Core\\Num',
-  'Str'                            => 'Fuel\\Core\\Str',
-  'TestCase'                       => 'Fuel\\Core\\TestCase',
-  'Theme'                          => 'Fuel\\Core\\Theme',
-  'ThemeException'                 => 'Fuel\\Core\\ThemeException',
-  'Uri'                            => 'Fuel\\Core\\Uri',
-  'Unzip'                          => 'Fuel\\Core\\Unzip',
-  'Upload'                         => 'Fuel\\Core\\Upload',
-  'Validation'                     => 'Fuel\\Core\\Validation',
-  'Validation_Error'               => 'Fuel\\Core\\Validation_Error',
-  'View'                           => 'Fuel\\Core\\View',
-  'Viewmodel'                      => 'Fuel\\Core\\Viewmodel',
-];
-
-/**
- * クラスエイリアス名をappレベルのファイルパスに変換する
- *
- * FuelPHP の Autoloader::class_to_path() と同じロジック（小文字化、_ -> /）
- *
- * @param  string $alias グローバルエイリアス名 (例: "Cache_Storage_File")
- * @return string         appクラスディレクトリからの相対パス (例: "cache/storage/file.php")
- */
-function alias_to_app_path(string $alias): string
+function main(array $argv): void
 {
-  return strtolower(str_replace('_', DIRECTORY_SEPARATOR, $alias)) . '.php';
-}
+  if (count($argv) !== 4) {
+    fwrite(STDERR, "Usage: php {$argv[0]} /path/to/fuel/core /path/to/fuel/app/classes /path/to/stubs\n");
+    exit(1);
+  }
 
-// -----------------------------------------------------------------------
-// 各プロジェクトのスタブを生成
-// -----------------------------------------------------------------------
-foreach ($projects as $project_name => $project) {
-  $app_classes_dir = $project['app_classes_dir'];
-  $output_file     = $project['output_file'];
-  $core_classes    = $project['core_classes'] ?? $default_core_classes;
+  $core_path = normalize_path($argv[1]);
+  $app_classes_path = normalize_path($argv[2]);
+  $output_path = normalize_path($argv[3]) . 'fuel_aliases.php';
 
-  echo "[{$project_name}] 処理中...\n";
+  $core_classes = build_core_classes_from_bootstrap($core_path);
+  if ($core_classes === []) {
+    fwrite(STDERR, "FuelPHP core classes were not found in {$core_path}bootstrap.php\n");
+    exit(1);
+  }
 
-  // スタブ内容の構築
-  $lines    = [];
-  $skipped  = [];
+  echo "処理中...\n";
+  echo "  core_path: {$core_path}\n";
+  echo "  app_classes_path: {$app_classes_path}\n";
+
+  $lines = [];
+  $skipped = [];
   $included = [];
+  $kind_counts = [];
 
-  foreach ($core_classes as $alias => $fqcn) {
-    $app_file = $app_classes_dir . alias_to_app_path($alias);
+  foreach ($core_classes as $alias => $core_class) {
+    $app_path = $app_classes_path . alias_to_app_path($alias);
 
-    if (file_exists($app_file)) {
-      // appオーバーライドが存在する場合はスキップ
-      // （Intellephenseがそのファイルを直接認識しているためスタブ不要）
+    if (file_exists($app_path)) {
       $skipped[] = $alias;
       continue;
     }
 
     $included[] = $alias;
+    $kind = $core_class['kind'];
+    $kind_counts[$kind] = ($kind_counts[$kind] ?? 0) + 1;
 
-    // FuelPHPをロードせずに実行するため、クラス種別（class/interface/abstract）は
-    // 判定できない。すべて class extends として出力する。
-    $lines[] = "class {$alias} extends \\{$fqcn} {}";
+    $lines[] = build_stub_declaration($alias, $core_class['fqcn'], $kind);
   }
 
-  // ファイル書き出し
-  $output_dir = dirname($output_file);
-  if (!is_dir($output_dir)) {
-    mkdir($output_dir, 0755, true);
+  $output_path_parent = dirname($output_path);
+  if (!is_dir($output_path_parent)) {
+    mkdir($output_path_parent, 0755, true);
   }
 
   $header = <<<'PHP'
@@ -253,26 +71,206 @@ foreach ($projects as $project_name => $project) {
      * FuelPHP IDE Stubs — tools/generate_ide_stubs.php により自動生成
      *
      * 手動で編集しないでください。
-     * appオーバーライドの追加・削除後は `php tools/generate_ide_stubs.php` を再実行してください。
+     * appオーバーライドの追加・削除後は、core/app/output の各パスを指定して再実行してください。
      *
      * このファイルはIntelephense専用です。実行時には読み込まれません。
      */
 
     PHP;
 
-  file_put_contents($output_file, $header . implode("\n", $lines) . "\n");
+  file_put_contents($output_path, $header . implode("\n", $lines) . "\n");
 
-  // 実行結果の出力
-  echo "  生成完了: {$output_file}\n";
+  echo "  生成完了: {$output_path}\n";
   echo "  スタブ生成数: " . count($included) . "\n";
+  foreach ($kind_counts as $kind => $count) {
+    echo "    - {$kind}: {$count}\n";
+  }
   echo "  スキップ数 (appオーバーライドが存在): " . count($skipped) . "\n";
 
   if ($skipped) {
     echo "\n  スキップされたクラス:\n";
     foreach ($skipped as $alias) {
-      echo "    - {$alias} (" . $app_classes_dir . alias_to_app_path($alias) . ")\n";
+      echo "    - {$alias} (" . $app_classes_path . alias_to_app_path($alias) . ")\n";
     }
   }
 
   echo "\n";
+}
+
+/**
+ * パス末尾を DIRECTORY_SEPARATOR つきに正規化する
+ *
+ * @param  string $path
+ * @return string
+ */
+function normalize_path(string $path): string
+{
+  return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+}
+
+/**
+ * FuelPHP core の bootstrap.php からスタブ生成用のcoreクラス一覧を作る
+ *
+ * @param  string $core_path fuel/core/ へのパス
+ * @return array<string, array{fqcn: string, kind: string}>
+ */
+function build_core_classes_from_bootstrap(string $core_path): array
+{
+  $bootstrap_path = $core_path . 'bootstrap.php';
+
+  if (!is_file($bootstrap_path)) {
+    return [];
+  }
+
+  $bootstrap = file_get_contents($bootstrap_path);
+  if ($bootstrap === false) {
+    return [];
+  }
+
+  preg_match_all(
+    "#'Fuel\\\\\\\\Core\\\\\\\\([^']+)'\\s*=>\\s*COREPATH\\.'([^']+)'#",
+    $bootstrap,
+    $matches,
+    PREG_SET_ORDER
+  );
+
+  $core_classes = [];
+  foreach ($matches as $match) {
+    $alias = $match[1];
+    $relative_path = str_replace('/', DIRECTORY_SEPARATOR, $match[2]);
+    $class_path = $core_path . $relative_path;
+
+    $core_classes[$alias] = [
+      'fqcn' => 'Fuel\\Core\\' . $alias,
+      'kind' => detect_php_declaration_kind($class_path, $alias) ?? 'class',
+    ];
+  }
+
+  return $core_classes;
+}
+
+/**
+ * PHPファイルから指定クラス名の宣言種別を取得する
+ *
+ * @param  string $path
+ * @param  string $class_name
+ * @return string|null class / abstract class / interface / trait
+ */
+function detect_php_declaration_kind(string $path, string $class_name): ?string
+{
+  if (!is_file($path)) {
+    return null;
+  }
+
+  $contents = file_get_contents($path);
+  if ($contents === false) {
+    return null;
+  }
+
+  $tokens = token_get_all($contents);
+  $is_abstract = false;
+
+  for ($i = 0, $count = count($tokens); $i < $count; $i++) {
+    $token = $tokens[$i];
+
+    if (is_array($token) && $token[0] === T_ABSTRACT) {
+      $is_abstract = true;
+      continue;
+    }
+
+    if (!is_array($token)) {
+      if (trim($token) !== '') {
+        $is_abstract = false;
+      }
+      continue;
+    }
+
+    if (in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_FINAL], true)) {
+      continue;
+    }
+
+    if (!in_array($token[0], [T_CLASS, T_INTERFACE, T_TRAIT], true)) {
+      $is_abstract = false;
+      continue;
+    }
+
+    $name = next_string_token($tokens, $i);
+    if ($name === null || strcasecmp($name, $class_name) !== 0) {
+      $is_abstract = false;
+      continue;
+    }
+
+    if ($token[0] === T_INTERFACE) {
+      return 'interface';
+    }
+
+    if ($token[0] === T_TRAIT) {
+      return 'trait';
+    }
+
+    return $is_abstract ? 'abstract class' : 'class';
+  }
+
+  return null;
+}
+
+/**
+ * 指定token以降に出てくる宣言名を取得する
+ *
+ * @param  array<int, mixed> $tokens
+ * @param  int              $offset
+ * @return string|null
+ */
+function next_string_token(array $tokens, int $offset): ?string
+{
+  for ($i = $offset + 1, $count = count($tokens); $i < $count; $i++) {
+    if (!is_array($tokens[$i])) {
+      if (trim($tokens[$i]) === '') {
+        continue;
+      }
+      return null;
+    }
+
+    if ($tokens[$i][0] === T_STRING) {
+      return $tokens[$i][1];
+    }
+
+    if (!in_array($tokens[$i][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * クラスエイリアス名をappレベルのファイルパスに変換する
+ *
+ * FuelPHP の Autoloader::class_to_path() と同じロジック（小文字化、_ -> /）
+ *
+ * @param  string $alias グローバルエイリアス名 (例: "Cache_Storage_File")
+ * @return string        appクラスパスからの相対パス (例: "cache/storage/file.php")
+ */
+function alias_to_app_path(string $alias): string
+{
+  return strtolower(str_replace('_', DIRECTORY_SEPARATOR, $alias)) . '.php';
+}
+
+/**
+ * @param  string $alias
+ * @param  string $fqcn
+ * @param  string $kind
+ * @return string
+ */
+function build_stub_declaration(string $alias, string $fqcn, string $kind): string
+{
+  if ($kind === 'interface') {
+    return "interface {$alias} extends \\{$fqcn} {}";
+  }
+
+  if ($kind === 'abstract class') {
+    return "abstract class {$alias} extends \\{$fqcn} {}";
+  }
+
+  return "class {$alias} extends \\{$fqcn} {}";
 }

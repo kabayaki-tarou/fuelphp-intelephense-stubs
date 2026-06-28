@@ -170,14 +170,14 @@ function detect_php_declaration_kind(string $path, string $class_name): ?string
   $tokens = token_get_all($contents);
   $is_abstract = false;
 
-  for ($i = 0, $count = count($tokens); $i < $count; $i++) {
-    $token = $tokens[$i];
-
+  foreach ($tokens as $i => $token) {
+    // abstract は class と別tokenなので、次の class まで覚えておく。
     if (is_array($token) && $token[0] === T_ABSTRACT) {
       $is_abstract = true;
       continue;
     }
 
+    // 記号などの文字tokenが来たら、abstract class の並びではない。
     if (!is_array($token)) {
       if (trim($token) !== '') {
         $is_abstract = false;
@@ -185,15 +185,19 @@ function detect_php_declaration_kind(string $path, string $class_name): ?string
       continue;
     }
 
+    // 空白・コメント・final は宣言の前に挟まっても判定状態を変えない。
     if (in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_FINAL], true)) {
       continue;
     }
 
+    // class/interface/trait 以外の意味あるtokenで abstract 候補をリセットする。
     if (!in_array($token[0], [T_CLASS, T_INTERFACE, T_TRAIT], true)) {
       $is_abstract = false;
       continue;
     }
 
+    // 1ファイルに複数宣言があるため、探している宣言名だけを対象にする。
+    // 期待しているのは class, interface, trait
     $name = next_string_token($tokens, $i);
     if ($name === null || strcasecmp($name, $class_name) !== 0) {
       $is_abstract = false;
@@ -224,6 +228,7 @@ function detect_php_declaration_kind(string $path, string $class_name): ?string
 function next_string_token(array $tokens, int $offset): ?string
 {
   for ($i = $offset + 1, $count = count($tokens); $i < $count; $i++) {
+    // class と宣言名の間にある空白などを読み飛ばす。
     if (!is_array($tokens[$i])) {
       if (trim($tokens[$i]) === '') {
         continue;
@@ -231,10 +236,12 @@ function next_string_token(array $tokens, int $offset): ?string
       return null;
     }
 
+    // class Foo の Foo にあたる宣言名を返す。
     if ($tokens[$i][0] === T_STRING) {
       return $tokens[$i][1];
     }
 
+    // コメントや空白以外が先に来たら、通常の宣言形式ではない。
     if (!in_array($tokens[$i][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
       return null;
     }
